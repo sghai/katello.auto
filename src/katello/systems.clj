@@ -29,6 +29,8 @@
   package-select                  "//input[@id='package_%s']"
   package-action-status           "//input[@id='package_%s']/following::td[@class='package_action_status']"
   get-filtered-package            "//input[@id='package_%s']/following::td[@class='package_name']"
+  errata-status-text              "//td[contains(text(),'%s')]/following::span[@class='errata_status_text']"
+  errata-checkbox                 "//input[@id='errata_checkbox' and @value='%s']"
   environment-checkbox            "//input[@class='node_select' and @type='checkbox' and @data-node_name='%s']"
   system-detail-textbox           "//label[contains(.,'%s')]/../following-sibling::*[1]"
   system-fact-textbox             "//td[contains(.,'%s')]/./following-sibling::*[1]"
@@ -532,4 +534,18 @@
   (filter-package system {:package package})
   (browser click ::remove-package)
   (check-pkg-update-status package))
+
+(defn errata-install "Select errata to install"
+  [system errata-type errata-ids &[timeout-ms]]
+  (nav/go-to ::content-errata-page system)
+  (browser select ::select-errata-type errata-type)
+  (doseq [errata-id errata-ids]
+    (browser click (errata-checkbox errata-id))
+    (browser click ::install-errata)
+    (sel/loop-with-timeout (or timeout-ms (* 20 60 1000))[current-status ""]
+                           (case current-status
+                             "Install Finished" current-status
+                             "Error on Install" (throw+ {:type ::errata-install-failed :msg "Error on Install"})
+                             (do (Thread/sleep 1000)
+                               (recur (browser getText (errata-status-text errata-id))))))))
   

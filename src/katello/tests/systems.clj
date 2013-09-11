@@ -619,6 +619,36 @@
                                {:errata-type "Bug Fix", :errata-ids (list "RHEA-2012:3234")}
                                {:errata-type "Security", :errata-ids (list "RHEA-2012:3693" "RHEA-2012:619" "RHEA-2012:783")}]]
                    (filter-errata-by-type mysys errata)))))))
+  
+  (deftest "Install Errata"
+    :uuid "f2492ea2-295d-4d63-a182-12ed3a30f691"
+    :data-driven "true"
+     
+    (fn [errata-type errata-ids]
+      (let [repo-url "http://hhovsepy.fedorapeople.org/fakerepos/zoo4/"
+            product (configure-product-for-pkg-install repo-url)
+            packages "walrus"]
+        (provision/with-queued-client
+          ssh-conn
+          (client/run-cmd ssh-conn "wget -O /etc/yum.repos.d/zoo.repo https://gist.github.com/sghai/6387115/raw/")
+          (client/run-cmd ssh-conn "yum install -y cow cheetah pig zebra")
+          (client/register ssh-conn
+                           {:username (:name *session-user*)
+                            :password (:password *session-user*)
+                            :org (-> product :provider :org :name)
+                            :env (:name test-environment)
+                            :force true})
+          (client/run-cmd ssh-conn "rm -f /etc/yum.repos.d/zoo.repo")
+          (let [mysys (-> {:name (client/my-hostname ssh-conn) :env test-environment}
+                        katello/newSystem)]
+            (client/subscribe ssh-conn (system/pool-id mysys product))
+            (client/run-cmd ssh-conn "rpm --import http://inecas.fedorapeople.org/fakerepos/zoo/RPM-GPG-KEY-dummy-packages-generator")
+            (client/run-cmd ssh-conn "yum repolist")
+            (system/errata-install mysys errata-type errata-ids)))))
+    
+    [["All Errata" (list "RHEA-2012:3234" "RHEA-2012:3693" "RHEA-2012:619")]
+     ["Bug Fix" (list "RHEA-2012:3234")]
+     ["Security" (list "RHEA-2012:3693" "RHEA-2012:619")]])
         
   (deftest "Re-registering a system to different environment"
     :uuid "72dfb70e-51c5-b074-4beb-7def65550535"
