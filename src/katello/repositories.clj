@@ -18,6 +18,7 @@
    ::save-repository        "//input[@value='Create']"
    ::remove-repository      (ui/link "Remove Repository")
    ::repo-gpg-select        "//select[@id='repo_gpg_key']"
+   ::repo-type              "//select[@id='repo_content_type']"
    ::update-repo-gpg-select "//select[@name='gpg_key']"
    ::update-gpg-key         "//div[@class='jspPane' and contains(.,'Repository Details')]//div[@name='gpg_key']"
    ::save-updated-gpg-key   "//div[@name='gpg_key']//button[contains(.,'Save')]"
@@ -43,7 +44,7 @@
 (defn- create
   "Adds a repository under the given provider and product. Requires a
    name and url be given for the repo."
-  [{:keys [product name url gpg-key]}]
+  [{:keys [product name url gpg-key repo-type]}]
    {:pre [(instance? katello.Product product)
           (instance? katello.Provider (kt/provider product))
           (instance? katello.Organization (kt/org product))]} 
@@ -51,6 +52,7 @@
   (nav/go-to ::provider/products-page product)
   (browser click (add-repo-link (:name product)))
   (when gpg-key (browser select ::repo-gpg-select (:name gpg-key)))
+  (when repo-type (browser select ::repo-type repo-type))
   (sel/fill-ajax-form {::repo-name-text name
                        ::repo-url-text url}
                       ::save-repository)
