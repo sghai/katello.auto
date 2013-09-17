@@ -76,13 +76,14 @@
       (ui/delete)))
   
   (deftest "create a puppet repo"
-	    (with-unique [provider (katello/newProvider {:name "custom_provider" :org conf/*session-org*})
-	                  product (katello/newProduct {:name "fake1" :provider provider})
-	                  repo1 (katello/newRepository {:name "testrepo1"
-	                                                :product product
-	                                                :url "http://forge.puppetlabs.com"
-	                                                :repo-type "puppet"})]
-	      (ui/create-all (list provider product repo1))))
+    :uuid "d064e155-d486-4cc9-bac3-668a23d1bb39"
+    (with-unique [provider (katello/newProvider {:name "custom_provider" :org conf/*session-org*})
+                  product (katello/newProduct {:name "fake1" :provider provider})
+                  repo1 (katello/newRepository {:name "testrepo1"
+                                                :product product
+                                                :url "http://forge.puppetlabs.com"
+                                                :repo-type "puppet"})]
+      (ui/create-all (list provider product repo1))))
   
   (deftest "Create two products with the same name, in different orgs"
     :uuid "925f72c2-1bd7-8024-0d33-1736ea23de14"
